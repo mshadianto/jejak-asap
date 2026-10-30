@@ -84,6 +84,16 @@ and another left out the current PM2.5. The rules were tightened in both cases. 
 forecast still raised TINGGI for two cities on a clean day. Those are real false alarms, and the
 demo shows them.
 
+## Built during the hackathon (26 Oct – 4 Nov 2026)
+
+Everything in this repository was written during the hackathon: the SAM 3.1 + Muse smoke pipeline,
+the particle forecast, the backtests, the alert writer, the demo page and the video. Data come from
+public sources (NASA, ERA5, CAMS, BMKG, Kemenkes guidance).
+
+Jejak Asap does not give medical advice. The health actions are fixed public-health guidance from
+Indonesia's Ministry of Health and BMKG air-quality bands, chosen by rules; Muse Spark only words them,
+and every message is checked and labelled as a model forecast, not an official notice.
+
 ## Meta models used
 
 | Model | Where | Why |
