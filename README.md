@@ -8,6 +8,8 @@ arrives, when it arrives, and what residents, schools and health centres should 
 Built for the Meta Global AI Developer Hackathon (indie track, *Push the Frontier*) by
 M. Sopian Hadianto.
 
+**Demo video (3 min):** https://youtu.be/-k62AoPYIsg
+
 ```
 NASA FIRMS hotspots ─┐
 NASA GIBS true colour ┼─► SAM 3.1 cuts out smoke ─► Muse Spark: smoke or cloud?
