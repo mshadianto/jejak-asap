@@ -8,7 +8,7 @@ arrives, when it arrives, and what residents, schools and health centres should 
 Built for the Meta Global AI Developer Hackathon (indie track, *Push the Frontier*) by
 M. Sopian Hadianto.
 
-**Demo video (3 min):** https://youtu.be/-k62AoPYIsg
+**Live demo:** https://jejakasap.mshadianto.id · **Demo video (3 min):** https://youtu.be/-k62AoPYIsg
 
 ```
 NASA FIRMS hotspots ─┐

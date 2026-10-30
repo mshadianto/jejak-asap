@@ -20,6 +20,7 @@ What we found, tested on the 2023 fire season against hourly PM2.5
 • Adding SAM-detected smoke did not raise the score over 46 days; we report that too
 
 Built for the Meta Global AI Developer Hackathon (Push the Frontier) by M. Sopian Hadianto.
+Live demo: https://jejakasap.mshadianto.id
 Code: https://github.com/mshadianto/jejak-asap
 
 Data: NASA FIRMS, NASA GIBS, ERA5 and CAMS via Open-Meteo, BMKG, Kemenkes. Forecasts in this video are model replays of past days, not official warnings.
