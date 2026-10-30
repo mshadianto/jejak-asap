@@ -19,7 +19,7 @@ What we found, tested on the 2023 fire season against hourly PM2.5
 • Wind beats a simple "near a fire" rule out of sample: CSI 0.36 vs 0.29 (0.45 with measured PM2.5)
 • Adding SAM-detected smoke did not raise the score over 46 days; we report that too
 
-Built for the Meta Global AI Developer Hackathon (Push the Frontier) by M. Sopian Hadianto.
+An independent project by M. Sopian Hadianto, built with Meta SAM 3.1 and Muse Spark. Started during the Meta Global AI Developer Hackathon; not a hackathon entry.
 Live demo: https://jejakasap.mshadianto.id
 Code: https://github.com/mshadianto/jejak-asap
 
@@ -40,7 +40,7 @@ Chapters
 
 ## Tags
 
-haze, forest fire, peatland fire, karhutla, Kalimantan, Indonesia, air quality, PM2.5, early warning, wildfire smoke, Meta AI, SAM 3.1, Segment Anything, Muse Spark, hackathon, satellite, NASA FIRMS, AI for good
+haze, forest fire, peatland fire, karhutla, Kalimantan, Indonesia, air quality, PM2.5, early warning, wildfire smoke, Meta AI, SAM 3.1, Segment Anything, Muse Spark, satellite, NASA FIRMS, AI for good
 
 ## Settings
 

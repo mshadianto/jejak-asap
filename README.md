@@ -5,8 +5,9 @@ reaches cities hours before anyone tells the people who live there. Jejak Asap t
 satellite fire detections into a 24-hour forecast for each city: the chance that smoke
 arrives, when it arrives, and what residents, schools and health centres should do about it.
 
-Built for the Meta Global AI Developer Hackathon (indie track, *Push the Frontier*) by
-M. Sopian Hadianto.
+An independent project by M. Sopian Hadianto, built with Meta's SAM 3.1 and Muse Spark models.
+It was started during the Meta Global AI Developer Hackathon but is not a hackathon entry: I am
+not eligible to compete, so it was not submitted.
 
 **Live demo:** https://jejakasap.mshadianto.id · **Demo video (3 min):** https://youtu.be/-k62AoPYIsg
 
@@ -84,9 +85,9 @@ and another left out the current PM2.5. The rules were tightened in both cases. 
 forecast still raised TINGGI for two cities on a clean day. Those are real false alarms, and the
 demo shows them.
 
-## Built during the hackathon (26 Oct – 4 Nov 2026)
+## How it was built
 
-Everything in this repository was written during the hackathon: the SAM 3.1 + Muse smoke pipeline,
+Everything in this repository was written in late October 2026: the SAM 3.1 + Muse smoke pipeline,
 the particle forecast, the backtests, the alert writer, the demo page and the video. Data come from
 public sources (NASA, ERA5, CAMS, BMKG, Kemenkes guidance).
 
