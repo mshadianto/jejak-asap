@@ -1,0 +1,12 @@
+.env
+out/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv-win/
+media/jejak_asap_demo.mp4
+media/jejak_asap_demo_voice.mp4
+raw/
+*.webm
+_demo.html
+media/jejak-asap-msh.mp4

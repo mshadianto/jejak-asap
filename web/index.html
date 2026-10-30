@@ -1,0 +1,443 @@
+<title>Jejak Asap Backtest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a field-bulletin page. Satellite map on the left with a date strip under it,
+   city ledger on the right, the evidence tables below. */
+:root {
+  --bg: #f2f4f1;
+  --panel: #ffffff;
+  --fg: #18211d;
+  --muted: #5a6862;
+  --line: #d6ddd8;
+  --accent: #d9480f;       /* ember */
+  --accent-soft: #fbe3d6;
+  --tinggi: #c92a2a;
+  --sedang: #e8890c;
+  --rendah: #e9c63b;
+  --aman: #2f8a57;
+  --ok: #2f7d4f;
+  --bad: #b42318;
+  --warn: #a8670f;
+  --plume: rgba(217, 72, 15, .38);
+  --plume-edge: #ff7a3d;
+  --box: #ffffff;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111614; --panel: #18201c; --fg: #e4ebe7; --muted: #9aaaa2; --line: #2b3631;
+    --accent: #ff7a3d; --accent-soft: #3a2116; --ok: #5fc08a; --bad: #ff6b5e; --warn: #f0b24a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111614; --panel: #18201c; --fg: #e4ebe7; --muted: #9aaaa2; --line: #2b3631;
+  --accent: #ff7a3d; --accent-soft: #3a2116; --ok: #5fc08a; --bad: #ff6b5e; --warn: #f0b24a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 16px/1.5 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 800 clamp(34px, 5vw, 54px)/1 var(--display); font-stretch: 78%; margin: 0; letter-spacing: -.01em; }
+h2 { font: 750 24px/1.15 var(--display); font-stretch: 85%; margin: 0; text-wrap: balance; }
+h3 { font: 700 15px/1.2 var(--display); margin: 0; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+.lede { max-width: 70ch; margin: 0; color: var(--muted); }
+.lede b { color: var(--fg); }
+
+.main { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+
+.mapcard { overflow: hidden; }
+.mapbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.daytitle { font: 750 20px/1.1 var(--display); font-stretch: 85%; }
+.daymeta { font: 13px/1.3 var(--mono); color: var(--muted); }
+.toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.toggle button { font: 600 13px/1 var(--body); border: 0; background: transparent; color: var(--muted); padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.toggle button:focus-visible, .dates button:focus-visible, .city:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mapbox { position: relative; aspect-ratio: 7 / 5; max-width: 100%; background: #0d1a22; }
+.mapbox img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
+.mapbox svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 10px 14px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.sw.sq { border-radius: 2px; }
+
+.dates { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 4px; padding: 12px 14px 14px; border-top: 1px solid var(--line); }
+@media (max-width: 640px) { .dates { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+.dates button { display: grid; gap: 4px; justify-items: center; padding: 6px 0 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--fg); cursor: pointer; font: 600 13px/1 var(--mono); }
+.dates button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.dates .bar { width: 70%; height: 22px; display: flex; align-items: flex-end; }
+.dates .bar i { display: block; width: 100%; background: var(--muted); opacity: .55; border-radius: 1px; }
+.dates .lbl { font-size: 11px; color: var(--muted); }
+
+.side { display: grid; gap: 14px; }
+.panel { padding: 14px; display: grid; gap: 10px; }
+.tally { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.tally div { border: 1px solid var(--line); border-radius: 4px; padding: 8px; display: grid; gap: 2px; }
+.tally b { font: 700 22px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.tally small { font-size: 12px; color: var(--muted); }
+.cities { display: grid; gap: 4px; max-height: 420px; overflow-y: auto; }
+.city { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 7px 8px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; background: transparent; color: var(--fg); text-align: left; font: inherit; }
+.city:hover { border-color: var(--line); }
+.city[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.city .nm { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.city .nm small { font-weight: 400; color: var(--muted); margin-left: 4px; }
+@media (max-width: 480px) { .city .nm small { display: none; } }
+.num { font: 13px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.chip { font: 600 11px/1 var(--mono); letter-spacing: .04em; padding: 4px 6px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap; }
+.chip.hit { color: var(--ok); } .chip.miss { color: var(--bad); } .chip.false_alarm { color: var(--warn); } .chip.correct_negative { color: var(--muted); }
+
+.detail { padding: 14px; display: grid; gap: 8px; }
+.detail .row { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; color: var(--muted); }
+.detail .row b { color: var(--fg); font-weight: 600; }
+.chartbox { overflow-x: auto; }
+.chartbox svg { display: block; width: 100%; min-width: 300px; height: auto; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+
+.evidence { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 960px) { .evidence { grid-template-columns: 1fr; } }
+.evi { padding: 16px; display: grid; gap: 10px; align-content: start; }
+.evi p { margin: 0; font-size: 15px; }
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 11px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+tr.us td { font-weight: 600; }
+tr.us td:first-child { box-shadow: inset 3px 0 0 var(--accent); padding-left: 8px; }
+.verdict { font: 700 13px/1.3 var(--mono); padding: 8px 10px; border-radius: 4px; background: var(--accent-soft); }
+.verdict.neutral { background: transparent; border: 1px dashed var(--line); font-weight: 600; color: var(--muted); }
+
+.alerts { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs button { font: 600 13px/1 var(--body); padding: 7px 10px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.tabs button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.msg { white-space: pre-wrap; font-size: 15px; line-height: 1.55; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; margin: 0; }
+.src { font: 600 11px/1 var(--mono); letter-spacing: .04em; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); max-width: 90ch; }
+footer p { margin: 0 0 6px; }
+@media (prefers-reduced-motion: no-preference) { .city, .dates button { transition: background .15s, border-color .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Meta AI hackathon · haze early warning · Kalimantan, Oct 2023</div>
+    <h1>Jejak Asap</h1>
+    <p class="lede">Fire hotspots → SAM 3.1 cuts out the smoke → Muse Spark checks smoke vs cloud → wind carries particles for 24 hours → each city gets a chance of smoke and an arrival time. Below is a replay of <b>16 real days</b>, scored against hourly PM2.5, including the days it got wrong.</p>
+  </header>
+
+  <section class="main">
+    <div class="card mapcard">
+      <div class="mapbar">
+        <div>
+          <div class="daytitle" id="dayTitle">…</div>
+          <div class="daymeta" id="dayMeta">…</div>
+        </div>
+        <div class="toggle" role="group" aria-label="Forecast version">
+          <button id="mFire" type="button" aria-pressed="true">Fires + wind</button>
+          <button id="mSam" type="button" aria-pressed="false">+ SAM/Muse smoke</button>
+        </div>
+      </div>
+      <div class="mapbox">
+        <img id="sat" alt="VIIRS true-colour satellite image of Central and South Kalimantan for the selected day">
+        <svg id="ov" viewBox="0 0 1050 750" preserveAspectRatio="none" aria-label="Map overlay: fires, smoke plumes and city forecasts"></svg>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--tinggi)"></i>TINGGI ≥60%</span>
+        <span><i class="sw" style="background:var(--sedang)"></i>SEDANG ≥30%</span>
+        <span><i class="sw" style="background:var(--rendah)"></i>RENDAH</span>
+        <span><i class="sw" style="background:var(--aman)"></i>AMAN</span>
+        <span><i class="sw" style="background:transparent;border:2.5px solid #fff;box-shadow:0 0 0 1px #000"></i>white ring = PM2.5 reached 55.5 µg/m³</span>
+        <span><i class="sw sq" style="background:var(--plume);border:1px solid var(--plume-edge)"></i>smoke accepted by Muse</span>
+        <span><i class="sw" style="background:#ffd43b;width:7px;height:7px"></i>fire cluster</span>
+        <span><i class="sw sq" style="border:1px dashed #fff;background:transparent;box-shadow:0 0 0 1px #0003"></i>SAM box (110 m/px)</span>
+        <span>✉ = day with alert messages</span>
+      </div>
+      <div class="dates" id="dates" role="group" aria-label="Choose a day"></div>
+    </div>
+
+    <div class="side">
+      <div class="card panel">
+        <h3>Warnings vs what happened (warning = chance ≥50%)</h3>
+        <div class="tally" id="tally"></div>
+        <div class="cities" id="cities" role="group" aria-label="Cities"></div>
+      </div>
+      <div class="card detail" id="detail"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="margin-bottom:6px">What the backtest says</h2>
+    <p class="lede" style="margin-bottom:14px">Forecast skill comes from wind plus measured PM2.5. Vision (SAM 3.1 + Muse) shows people where the smoke is; across three months it did not raise the score, and we report that.</p>
+    <div class="evidence" id="evidence"></div>
+  </section>
+
+  <footer>
+    <p>Reference PM2.5 is CAMS (model, via Open-Meteo Air Quality), not ground sensors; a city counts as smoky when hourly PM2.5 reaches 55.5 µg/m³ (US EPA "Unhealthy"). Satellite image: NASA GIBS VIIRS true colour. Hotspots: NASA FIRMS VIIRS. Wind: ERA5 100 m. Forecast = 20 wind scenarios; chance = share of scenarios that bring smoke within 25 km of the city.</p>
+    <p>CSI = hits ÷ (hits + misses + false alarms); 1 is perfect. Built by M. Sopian Hadianto.</p>
+  </footer>
+</div>
+
+<script>
+const fmtPct = v => Math.round(v * 100) + "%";
+const OUT = { hit: "HIT", miss: "MISS", false_alarm: "FALSE ALARM", correct_negative: "CLEAR" };
+const state = { day: 0, mode: "fire", city: null, data: null };
+const W = 1050, H = 750;
+
+function riskColor(p) {
+  const v = getComputedStyle(document.documentElement);
+  if (p >= 0.6) return v.getPropertyValue("--tinggi");
+  if (p >= 0.3) return v.getPropertyValue("--sedang");
+  if (p > 0) return v.getPropertyValue("--rendah");
+  return v.getPropertyValue("--aman");
+}
+function proj(lon, lat) {
+  const [w, s, e, n] = state.data.domain;
+  return [(lon - w) / (e - w) * W, (n - lat) / (n - s) * H];
+}
+function el(tag, attrs = {}, parent) {
+  const ns = ["svg", "g", "path", "circle", "rect", "line", "text", "polyline", "polygon"].includes(tag) ? "http://www.w3.org/2000/svg" : null;
+  const node = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "text") node.textContent = v; else node.setAttribute(k, v);
+  }
+  if (parent) parent.appendChild(node);
+  return node;
+}
+const P = c => state.mode === "sam" ? c.p_sam : c.p_fire;
+const outcomeOf = c => state.mode === "sam" ? c.out_sam : c.out_fire;
+const wib = iso => { const d = new Date(iso + "Z"); d.setUTCHours(d.getUTCHours() + 7); return d; };
+const hhmm = d => String(d.getUTCHours()).padStart(2, "0") + ".00";
+const dayName = iso => new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+
+function drawMap() {
+  const day = state.data.days[state.day];
+  document.getElementById("sat").src = day.image;
+  const svg = document.getElementById("ov");
+  svg.replaceChildren();
+  for (const b of state.data.boxes) {
+    const [x1, y1] = proj(b.bbox[0], b.bbox[3]), [x2, y2] = proj(b.bbox[2], b.bbox[1]);
+    el("rect", { x: x1, y: y1, width: x2 - x1, height: y2 - y1, fill: "none", stroke: "#fff", "stroke-width": 1.2, "stroke-dasharray": "5 4", opacity: .8 }, svg);
+  }
+  if (state.mode === "sam") {
+    for (const pl of day.plumes) {
+      const d = pl.rings.map(r => "M" + r.map(([x, y]) => proj(x, y).map(v => v.toFixed(1)).join(",")).join("L") + "Z").join("");
+      const path = el("path", { d, fill: "rgba(255,110,40,.42)", stroke: "#ff7a3d", "stroke-width": 1.2, "fill-rule": "evenodd" }, svg);
+      el("title", { text: `Muse: ${pl.label} · ${pl.area_km2.toLocaleString()} km² · ${pl.reason || ""}` }, path);
+    }
+  }
+  for (const [x, y, frp] of day.fires) {
+    const [px, py] = proj(x, y);
+    el("circle", { cx: px, cy: py, r: Math.min(6, 2 + Math.sqrt(frp) / 6), fill: "#ffd43b", stroke: "#7a2e00", "stroke-width": .8 }, svg);
+  }
+  for (const c of day.cities) {
+    const [px, py] = proj(c.lon, c.lat);
+    const g = el("g", { style: "cursor:pointer" }, svg);
+    if (c.smoky) el("circle", { cx: px, cy: py, r: 13, fill: "none", stroke: "#fff", "stroke-width": 3 }, g);
+    el("circle", { cx: px, cy: py, r: 8, fill: riskColor(P(c)), stroke: "#111", "stroke-width": 1.4 }, g);
+    if (state.city === c.name) el("circle", { cx: px, cy: py, r: 18, fill: "none", stroke: "#ff7a3d", "stroke-width": 2.5 }, g);
+    const left = px > W - 130;
+    const t = el("text", { x: left ? px - 15 : px + 15, y: py + 4, "text-anchor": left ? "end" : "start", fill: "#fff", "font-size": 15, "font-family": "Source Sans 3, sans-serif", "font-weight": 600, "paint-order": "stroke", stroke: "#000", "stroke-width": 3 }, g);
+    t.textContent = c.name;
+    g.addEventListener("click", () => selectCity(c.name));
+  }
+}
+
+function drawSide() {
+  const day = state.data.days[state.day];
+  document.getElementById("dayTitle").textContent = dayName(day.date);
+  const t0 = wib(day.analysis_utc);
+  document.getElementById("dayMeta").textContent =
+    `forecast issued ${hhmm(t0)} WIB · ${day.hotspots.toLocaleString()} hotspots · ${day.fire_clusters} fire clusters · ${day.plumes.length} plumes accepted, ${day.rejected} rejected by Muse`;
+  const counts = { hit: 0, miss: 0, false_alarm: 0, correct_negative: 0 };
+  day.cities.forEach(c => counts[outcomeOf(c)] !== undefined && counts[outcomeOf(c)]++);
+  const tally = document.getElementById("tally");
+  tally.replaceChildren();
+  [["hit", "hits"], ["miss", "misses"], ["false_alarm", "false alarms"], ["correct_negative", "correct clear"]].forEach(([k, label]) => {
+    const d = el("div", {}, tally);
+    el("b", { text: counts[k], style: `color:var(${k === "hit" ? "--ok" : k === "miss" ? "--bad" : k === "false_alarm" ? "--warn" : "--muted"})` }, d);
+    el("small", { text: label }, d);
+  });
+  const list = document.getElementById("cities");
+  list.replaceChildren();
+  const sorted = [...day.cities].sort((a, b) => P(b) - P(a) || (b.pm_max || 0) - (a.pm_max || 0));
+  for (const c of sorted) {
+    const b = el("button", { class: "city", type: "button", "aria-pressed": String(state.city === c.name) }, list);
+    el("i", { class: "sw", style: `background:${riskColor(P(c))}` }, b);
+    const nm = el("span", { class: "nm", text: c.name }, b);
+    if (c.in_box) el("small", { text: "in SAM box" }, nm);
+    el("span", { class: "num", text: `${fmtPct(P(c))} · ${c.pm_max == null ? "–" : Math.round(c.pm_max)} µg` }, b);
+    el("span", { class: "chip " + outcomeOf(c), text: OUT[outcomeOf(c)] }, b);
+    b.addEventListener("click", () => selectCity(c.name));
+  }
+  drawDetail();
+}
+
+function drawDetail() {
+  const day = state.data.days[state.day];
+  const c = day.cities.find(x => x.name === state.city) || [...day.cities].sort((a, b) => (b.pm_max || 0) - (a.pm_max || 0))[0];
+  state.city = c.name;
+  const box = document.getElementById("detail");
+  box.replaceChildren();
+  el("h2", { text: c.name }, box);
+  const row = el("div", { class: "row" }, box);
+  const add = (k, v) => { const s = el("span", {}, row); s.append(k + " "); el("b", { text: v }, s); };
+  add("Chance with SAM/Muse", fmtPct(c.p_sam));
+  add("fires only", fmtPct(c.p_fire));
+  add("Forecast arrival", c.arrival_wib || "none");
+  add("Observed peak", c.pm_max == null ? "no data" : `${Math.round(c.pm_max)} µg/m³`);
+  if (c.first_smoke_utc) add("first ≥55.5", hhmm(wib(c.first_smoke_utc)) + " WIB" + (c.smoky_now ? " (already smoky at issue time)" : ""));
+  box.appendChild(chart(c, day));
+  el("p", { class: "note", text: "Bars: hourly chance of smoke within 25 km (orange = with SAM/Muse smoke, grey = fires only). Line: CAMS PM2.5. Dashed: 55.5 µg/m³." }, box);
+  drawAlerts(box, day, c);
+}
+
+const AUD = { warga: "Residents (WhatsApp)", sekolah: "School principal", puskesmas: "Health centre" };
+function drawAlerts(box, day, c) {
+  const byDate = (state.data.alerts || {})[day.date];
+  if (!byDate) return;
+  const wrap = el("div", { class: "alerts" }, box);
+  el("h3", { text: "Alert messages · written by Muse Spark, checked by rules" }, wrap);
+  const a = byDate[c.name];
+  if (!a) { el("p", { class: "note", text: `No alert for ${c.name} on this day: the fires + wind forecast said AMAN and the air was not unhealthy.` }, wrap); return; }
+  const info = el("p", { class: "note" }, wrap);
+  info.textContent = `Fires + wind forecast: ${a.forecast_risk}, ${a.p}%. Actions used: ${a.risk}` +
+    (a.risk !== a.forecast_risk ? " (raised because measured PM2.5 was already unhealthy)" : "") + ".";
+  const tabs = el("div", { class: "tabs", role: "group", "aria-label": "Audience" }, wrap);
+  const pre = el("p", { class: "msg" }, wrap);
+  const src = el("div", { class: "src" }, wrap);
+  const show = k => {
+    state.aud = k;
+    tabs.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k)));
+    pre.textContent = a.msgs[k].text;
+    src.textContent = a.msgs[k].source === "muse" ? "WRITTEN BY MUSE · PASSED NUMBER, CLAIM AND LENGTH CHECKS" : "TEMPLATE · MUSE VERSION REJECTED OR UNAVAILABLE";
+  };
+  Object.keys(AUD).forEach(k => {
+    const b = el("button", { type: "button", "data-k": k, text: AUD[k] }, tabs);
+    b.addEventListener("click", () => show(k));
+  });
+  show(state.aud && a.msgs[state.aud] ? state.aud : "warga");
+}
+
+function chart(c, day) {
+  const wrap = el("div", { class: "chartbox" });
+  const w = 420, h = 190, L = 40, R = 36, T = 10, B = 26;
+  const svg = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": `Forecast chance and PM2.5 for ${c.name}` }, wrap);
+  const n = c.prob_sam.length, bw = (w - L - R) / n;
+  const pmMax = Math.max(120, ...c.pm.filter(v => v != null)) * 1.05;
+  const y1 = p => T + (1 - p) * (h - T - B), y2 = v => T + (1 - v / pmMax) * (h - T - B);
+  const cs = getComputedStyle(document.documentElement);
+  const muted = cs.getPropertyValue("--muted"), fg = cs.getPropertyValue("--fg"), line = cs.getPropertyValue("--line"), acc = cs.getPropertyValue("--accent");
+  [0, .5, 1].forEach(p => {
+    el("line", { x1: L, x2: w - R, y1: y1(p), y2: y1(p), stroke: line, "stroke-width": 1 }, svg);
+    el("text", { x: L - 6, y: y1(p) + 4, "text-anchor": "end", "font-size": 10, fill: muted, "font-family": "JetBrains Mono, monospace", text: fmtPct(p) }, svg);
+  });
+  for (let i = 0; i < n; i++) {
+    el("rect", { x: L + i * bw + 1, y: y1(c.prob_fire[i]), width: bw / 2 - 1, height: h - B - y1(c.prob_fire[i]), fill: muted, opacity: .45 }, svg);
+    el("rect", { x: L + i * bw + bw / 2, y: y1(c.prob_sam[i]), width: bw / 2 - 1, height: h - B - y1(c.prob_sam[i]), fill: acc, opacity: .8 }, svg);
+  }
+  el("line", { x1: L, x2: w - R, y1: y2(55.5), y2: y2(55.5), stroke: fg, "stroke-dasharray": "4 3", "stroke-width": 1 }, svg);
+  const pts = c.pm.map((v, i) => v == null ? null : [L + (i + .5) * bw, y2(v)]).filter(Boolean);
+  if (pts.length) el("polyline", { points: pts.map(p => p.join(",")).join(" "), fill: "none", stroke: fg, "stroke-width": 2 }, svg);
+  [0, 55.5, Math.round(pmMax / 1.05 / 10) * 10].forEach(v => el("text", { x: w - R + 4, y: y2(v) + 4, "font-size": 10, fill: muted, "font-family": "JetBrains Mono, monospace", text: v }, svg));
+  el("text", { x: w - R + 4, y: T + 2, "font-size": 9, fill: muted, "font-family": "JetBrains Mono, monospace", text: "µg/m³" }, svg);
+  const t0 = wib(day.analysis_utc);
+  for (let i = 0; i < n; i += 6) {
+    const d = new Date(t0); d.setUTCHours(d.getUTCHours() + i);
+    el("text", { x: L + (i + .5) * bw, y: h - 8, "text-anchor": "middle", "font-size": 10, fill: muted, "font-family": "JetBrains Mono, monospace", text: hhmm(d) }, svg);
+  }
+  return wrap;
+}
+
+function selectCity(name) { state.city = name; drawMap(); drawSide(); }
+function selectDay(i) {
+  state.day = i;
+  document.querySelectorAll("#dates button").forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+  drawMap(); drawSide();
+}
+function setMode(m) {
+  state.mode = m;
+  document.getElementById("mSam").setAttribute("aria-pressed", String(m === "sam"));
+  document.getElementById("mFire").setAttribute("aria-pressed", String(m === "fire"));
+  drawMap(); drawSide();
+}
+
+function evidence() {
+  const S = state.data.scores, s = S.series, h = s.holdout;
+  const box = document.getElementById("evidence");
+  const f2 = v => v == null ? "–" : v.toFixed(2);
+  const card = (title, lead, rows, verdict, neutral) => {
+    const c = el("div", { class: "card evi" }, box);
+    el("h3", { text: title }, c);
+    el("p", { text: lead }, c);
+    const t = el("div", { class: "tbl" }, c), tb = el("table", {}, t), hd = el("tr", {}, el("thead", {}, tb));
+    ["Rule", "POD", "FAR", "CSI"].forEach((x, i) => el("th", { text: x, class: i ? "n" : "" }, hd));
+    const body = el("tbody", {}, tb);
+    rows.forEach(([name, r, us]) => {
+      const tr = el("tr", { class: us ? "us" : "" }, body);
+      el("td", { text: name }, tr);
+      [r.pod, r.far, r.csi].forEach(v => el("td", { class: "n", text: f2(v) }, tr));
+    });
+    el("div", { class: "verdict" + (neutral ? " neutral" : ""), text: verdict }, c);
+  };
+  card("1 · Fires + wind vs a distance rule",
+    `Settings chosen on September, scored on October 2023 (13 cities, ${s.days} days in the full run). The rule to beat warns every city within R km of a fire, ignoring wind.`,
+    [["Jejak Asap, chance ≥" + h.model.setting, h.model, true],
+     [`Distance rule, ${h.distance.setting} km`, h.distance],
+     ["PM2.5 now + Jejak Asap", h["persistence+model"], true],
+     [`PM2.5 now + ${h["persistence+distance"].setting} km rule`, h["persistence+distance"]],
+     ["PM2.5 now only", h.persistence]],
+    `Out of sample: CSI ${f2(h.model.csi)} vs ${f2(h.distance.csi)}. Wind adds skill, modestly.`);
+  card("2 · SAM on the whole region (7°×5°)",
+    "Same 31 days, same wind and fires; the only change is smoke SAM found and Muse accepted on one 0.5 km/px image of the region.",
+    [["Fires only", S.sam_regional.fires], ["+ SAM/Muse smoke", S.sam_regional.sam, true]],
+    `No real gain: ${S.sam_regional.boot.mean >= 0 ? "+" : ""}${S.sam_regional.boot.mean.toFixed(3)} CSI, 95% CI ${S.sam_regional.boot.ci95[0]} to ${S.sam_regional.boot.ci95[1]}. Coastal haze accepted on clean days.`, true);
+  card("3 · SAM on 1.2° boxes around cities",
+    "Three boxes at about 110 m per pixel (Palangka Raya, Banjarmasin, Sampit), scored on the 7 cities inside them. October looked good; the August–September rerun did not repeat it.",
+    [["Oct · fires only", { pod: .68, far: .46, csi: .43 }], ["Oct · + SAM/Muse", { pod: .77, far: .45, csi: .47 }, true],
+     ["Aug–Sep · fires only", { pod: .77, far: .74, csi: .24 }], ["Aug–Sep · + SAM/Muse", { pod: .90, far: .79, csi: .21 }, true],
+     ["All 46 days · fires only", { pod: .71, far: .62, csi: .33 }], ["All 46 days · + SAM/Muse", { pod: .82, far: .66, csi: .31 }, true]],
+    "Not robust: −0.02 CSI over 46 days (95% CI −0.06 to +0.02). Light-smoke months gain false alarms. SAM/Muse stays as visual evidence, not a score booster.", true);
+}
+
+function buildDates() {
+  const wrapEl = document.getElementById("dates");
+  state.data.days.forEach((d, i) => {
+    const smoky = d.cities.filter(c => c.smoky).length;
+    const b = el("button", { type: "button", "aria-pressed": "false", "aria-label": `${d.date}, ${smoky} of ${d.cities.length} cities smoky` }, wrapEl);
+    const bar = el("span", { class: "bar" }, b);
+    el("i", { style: `height:${Math.max(2, smoky / d.cities.length * 100)}%` }, bar);
+    el("span", { text: d.date.slice(8) }, b);
+    el("span", { class: "lbl", text: smoky + "/" + d.cities.length + ((state.data.alerts || {})[d.date] ? " ✉" : "") }, b);
+    b.addEventListener("click", () => selectDay(i));
+  });
+}
+
+fetch("data.json").then(r => r.json()).then(data => {
+  state.data = data;
+  buildDates();
+  evidence();
+  document.getElementById("mSam").addEventListener("click", () => setMode("sam"));
+  document.getElementById("mFire").addEventListener("click", () => setMode("fire"));
+  const start = data.days.findIndex(d => d.date === "2023-10-15");
+  state.city = "Palangka Raya";
+  selectDay(start >= 0 ? start : 0);
+}).catch(err => {
+  document.getElementById("dayTitle").textContent = "Could not load the backtest data";
+  document.getElementById("dayMeta").textContent = String(err);
+});
+</script>
